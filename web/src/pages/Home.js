@@ -74,6 +74,7 @@ const Home = () => {
 
       setLoading(false)
       setPost(response.data);
+      console.log(response.data);
       setSearch('');
     } catch (error) {
       setLoading(false)

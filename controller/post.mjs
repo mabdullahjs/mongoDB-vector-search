@@ -38,7 +38,7 @@ const createPost = async (req, res) => {
 const getAllPost = async (req, res) => {
 
     let collection = db.collection("posts");
-    let results = await collection.find({}).toArray();
+    let results = await collection.find({}).sort({_id: -1}).toArray();
     res.send(results).status(200);
 
 }
@@ -46,39 +46,36 @@ const getAllPost = async (req, res) => {
 //get single post function
 const getSinglePost = async (req, res) => {
 
-    // const queryText = req.params.search;
-    // const response = await openai.embeddings.create({
-    //     model: "text-embedding-ada-002",
-    //     input: queryText,
-    // });
-    // const vector = response?.data[0]?.embedding;
-
-    // const index = pinecone.Index(process.env.PINECONE_INDEX_NAME);
-    // try {
-    //     const queryResponse = await index.query({
-    //         queryRequest: {
-    //             vector: vector,
-    //             // id: "vec1",
-    //             topK: 3,
-    //             includeValues: true,
-    //             includeMetadata: true,
-    //             namespace: process.env.PINECONE_NAME_SPACE
-    //         }
-    //     });
-
-    //     queryResponse.matches.map((item) => {
-    //         // console.log(`score ${item.score.toFixed(1)} => ${JSON.stringify(item.metadata)}\n\n`);
-    //     })
-    //     // console.log(`${queryResponse.matches.length} records found `);
-    //     res.send(queryResponse.matches)
-    // } catch (error) {
-    //     console.log(error)
-    // }
-
-
-
-    res.send('search query passed')
-
+    const queryText = req.params.search;
+    const response = await openai.embeddings.create({
+        model: "text-embedding-ada-002",
+        input: queryText,
+    });
+    const vector = response?.data[0]?.embedding;
+    // console.log('vector===>' , vector);
+    let collection = db.collection("posts");
+    const document = await collection.aggregate([
+      {
+        "$search": {
+          "index": "default",
+          "knnBeta": {
+            "vector": vector,
+            "path": "plot_embedding",
+            "k": 2147483642
+          },
+          "scoreDetails": true
+        }
+      },
+      {
+        "$project": {
+          "plot_embedding": 0,
+          "score": { "$meta": "searchScore" },
+          "scoreDetails": { "$meta": "searchScoreDetails" }
+        },
+  
+      }
+    ]).toArray();
+    res.send(document);
 }
 
 //delete Post
