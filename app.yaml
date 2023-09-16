@@ -1,0 +1,4 @@
+runtime: nodejs16
+env_variables:
+  MONGO_URI: mongodb+srv://mabdullah:bustop123@hackathon-smit.8egv6rd.mongodb.net/
+  OPENAI_API_KEY: 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
